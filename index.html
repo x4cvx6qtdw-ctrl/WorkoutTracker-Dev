@@ -1235,7 +1235,7 @@ async function showApp() {
   document.getElementById('profile-initial').textContent = email === 'Guest' ? '👤' : email.charAt(0).toUpperCase();
 
   // Show admin tab if admin
-  const isAdmin = currentUser?.id === '42521ed6-831e-41de-ae0d-f5461344325c';
+  const isAdmin = currentUser?.id === '2ae20d9d-bb13-4f41-ad23-e9ceccb5496d';
   document.getElementById('tab-admin').style.display = isAdmin ? 'flex' : 'none';
 
   // Lock tabs for guests
@@ -2316,7 +2316,7 @@ async function saveTargetsRemote(t) {
 // ════════════════════════════════════════════════════════════
 
 const AVATAR_COLORS = ['#0A84FF','#FF9F0A','#30D158','#BF5AF2','#FF375F','#FF6B35','#5E5CE6','#AC8E68'];
-const ADMIN_UID = '42521ed6-831e-41de-ae0d-f5461344325c';
+const ADMIN_UID = '2ae20d9d-bb13-4f41-ad23-e9ceccb5496d';
 
 async function loadAdminData() {
   const listEl     = document.getElementById('admin-user-list');
