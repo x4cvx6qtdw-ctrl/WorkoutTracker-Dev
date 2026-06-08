@@ -1028,7 +1028,7 @@
 const WEEKS = 12;
 const DAYS  = ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Day 7'];
 
-const WORKOUTS = [
+const DEFAULT_WORKOUTS = [
   { id:'back',      name:'Back & Biceps',       emoji:'🏋️', color:'#0A84FF', g:['#0A84FF','#0055CC'],
     exercises:[
       {name:'Abs',                        sets:3, reps:'Till Failure', note:''},
@@ -1091,6 +1091,8 @@ const WORKOUTS = [
       {name:'EZ Bar Skull Crushers',      sets:3, reps:'10–12',        note:''},
     ]},
 ];
+
+let WORKOUTS = [...DEFAULT_WORKOUTS];
 
 // ── Supabase Config ───────────────────────────────────────────────────────────
 const SB_URL = 'https://gsxnvhnmbaicszvfgxnl.supabase.co';
@@ -1253,6 +1255,7 @@ async function showApp() {
     foodTab.style.opacity = '1';
   }
 
+  await loadUserProgram();
   buildWeekScroller();
   buildWorkoutList();
   buildWeightTracker();
@@ -1293,6 +1296,61 @@ async function loadAllData() {
     if (targets) targets.forEach(r => lsSet('target_' + r.day_type, JSON.stringify(r)));
   } catch(e) { console.warn('Load error:', e); }
   hideSyncIndicator();
+}
+
+// ── Load user's assigned program from DB ──────────────────────────────────────
+async function loadUserProgram() {
+  if (isGuest) return;
+  try {
+    // Get user's program_id from profile
+    const { data: profile } = await sb.from('profiles').select('program_id').eq('id', currentUser.id).single();
+    if (!profile || !profile.program_id) return; // Use default
+
+    // Load program days
+    const { data: days } = await sb.from('program_days')
+      .select('*')
+      .eq('program_id', profile.program_id)
+      .order('day_number');
+    if (!days || !days.length) return;
+
+    // Load all exercises for this program's days
+    const dayIds = days.map(d => d.id);
+    const { data: exercises } = await sb.from('program_exercises')
+      .select('*')
+      .in('day_id', dayIds)
+      .order('exercise_order');
+
+    // Convert to app WORKOUTS format
+    var newWorkouts = days.map(function(day) {
+      if (day.is_rest) {
+        return {
+          id: day.id, name: day.name, emoji: day.emoji || '😴',
+          color: day.color || '#636366', isRest: true
+        };
+      }
+      var dayExercises = (exercises || [])
+        .filter(function(e) { return e.day_id === day.id; })
+        .sort(function(a, b) { return a.exercise_order - b.exercise_order; })
+        .map(function(e) {
+          return { name: e.name, sets: e.sets, reps: e.reps, note: e.note || '' };
+        });
+      return {
+        id: day.id,
+        name: day.name,
+        emoji: day.emoji || '🏋️',
+        color: day.color || '#0A84FF',
+        g: [day.gradient_start || day.color || '#0A84FF', day.gradient_end || '#0055CC'],
+        exercises: dayExercises
+      };
+    });
+
+    WORKOUTS = newWorkouts;
+
+    // Update DAYS labels
+    while (DAYS.length < WORKOUTS.length) DAYS.push('Day ' + (DAYS.length + 1));
+  } catch(e) {
+    console.warn('Program load error:', e);
+  }
 }
 
 // ── Save workout set weight + reps ───────────────────────────────────────────
@@ -2362,6 +2420,9 @@ async function loadAdminData() {
     } else {
       archTitle.style.display = 'none';
     }
+
+    // Populate program dropdowns
+    await populateProgramDropdowns();
   } catch(e) {
     console.warn('Admin error:', e);
     listEl.innerHTML = '<div class="admin-loading">Error loading data</div>';
@@ -2412,7 +2473,12 @@ function buildUserCard(profile, idx, allSets, allBW, allFood, isArchived) {
         '</div>' +
       '</div>';
   } else {
+    // Program assignment
     actionsHtml =
+      '<div style="margin-bottom:12px;"><div class="user-detail-label">Assign Program</div>' +
+      '<select style="width:100%;height:38px;border-radius:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:13px;padding:0 10px;font-family:inherit;outline:none;" onchange="assignProgram(\'' + uid + '\', this.value)" id="prog-select-' + uid + '">' +
+      '<option value="">Default (hardcoded)</option>' +
+      '</select></div>' +
       '<button class="archive-user-btn" onclick="confirmArchive(\'' + uid + '\')">Archive User</button>' +
       '<div class="archive-confirm-bar" id="archive-' + uid + '">' +
         '<div class="archive-confirm-text">Archive <strong>' + email + '</strong>? Held 30 days before deletion.</div>' +
@@ -2456,6 +2522,7 @@ function buildUserCard(profile, idx, allSets, allBW, allFood, isArchived) {
 
   var card = document.createElement('div');
   card.className = 'user-card' + (isArchived ? ' archived' : '');
+  card.setAttribute('data-program-id', profile.program_id || '');
   card.id = 'user-card-' + uid;
   card.innerHTML =
     '<button class="user-card-header">' +
@@ -2482,6 +2549,40 @@ function buildUserCard(profile, idx, allSets, allBW, allFood, isArchived) {
     '</div>';
   card.querySelector('.user-card-header').onclick = function() { card.classList.toggle('open'); };
   return card;
+}
+
+// ── Program assignment ─────────────────────────────────────────────────────────
+var allPrograms = [];
+
+async function loadProgramList() {
+  const { data } = await sb.from('workout_programs').select('id,name');
+  allPrograms = data || [];
+}
+
+async function populateProgramDropdowns() {
+  await loadProgramList();
+  var selects = document.querySelectorAll('[id^="prog-select-"]');
+  selects.forEach(function(sel) {
+    var uid = sel.id.replace('prog-select-', '');
+    // Keep the first option (default)
+    while (sel.options.length > 1) sel.remove(1);
+    allPrograms.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+    // Set current value from profile
+    var card = document.getElementById('user-card-' + uid);
+    var progId = card ? card.getAttribute('data-program-id') : '';
+    if (progId) sel.value = progId;
+  });
+}
+
+async function assignProgram(uid, programId) {
+  showSyncIndicator('saving');
+  await sb.from('profiles').update({ program_id: programId || null }).eq('id', uid);
+  hideSyncIndicator();
 }
 
 function confirmArchive(uid) {
