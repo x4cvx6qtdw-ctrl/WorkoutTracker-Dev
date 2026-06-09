@@ -1162,21 +1162,21 @@
 
   /* ── Cardio Logging ── */
   .cardio-section {
-    margin: 0 16px 16px; background: var(--card);
-    border-radius: 16px; overflow: hidden; border: 1px solid var(--card-border);
+    margin: 0 16px 16px; background: rgba(255,159,10,0.04);
+    border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,159,10,0.15);
   }
   .cardio-header {
     padding: 14px 16px; display: flex; align-items: center;
     justify-content: space-between; cursor: pointer;
   }
   .cardio-header:active { background: rgba(255,255,255,0.04); }
-  .cardio-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .cardio-title { font-size: 15px; font-weight: 700; color: #FF9F0A; }
   .cardio-badge {
     font-size: 12px; font-weight: 700; padding: 3px 9px;
     border-radius: 20px; background: rgba(255,159,10,0.12); color: #FF9F0A;
   }
   .cardio-badge.empty { background: rgba(255,255,255,0.06); color: var(--text-tertiary); }
-  .cardio-chevron { color: var(--text-tertiary); font-size: 16px; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); display: inline-block; }
+  .cardio-chevron { color: #FF9F0A; font-size: 16px; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); display: inline-block; }
   .cardio-section.open .cardio-chevron { transform: rotate(90deg); }
   .cardio-body {
     display: none; padding: 14px 16px; border-top: 1px solid var(--separator);
@@ -1188,27 +1188,27 @@
   }
   .cardio-type-btn {
     padding: 8px 14px; border-radius: 10px;
-    background: rgba(255,255,255,0.06); border: 1.5px solid transparent;
+    background: rgba(255,159,10,0.06); border: 1.5px solid rgba(255,159,10,0.15);
     color: var(--text-secondary); font-size: 13px; font-weight: 600;
     font-family: inherit; cursor: pointer; transition: all 0.2s;
   }
-  .cardio-type-btn.selected { border-color: #FF9F0A; color: #FF9F0A; background: rgba(255,159,10,0.1); }
+  .cardio-type-btn.selected { border-color: #FF9F0A; color: #FF9F0A; background: rgba(255,159,10,0.12); }
   .cardio-type-btn:active { transform: scale(0.95); }
   .cardio-fields {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
   }
   .cardio-field-wrap { display: flex; flex-direction: column; gap: 4px; }
-  .cardio-field-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.8px; }
+  .cardio-field-label { font-size: 10px; font-weight: 600; color: #FF9F0A; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.7; }
   .cardio-input {
     width: 100%; height: 40px; border-radius: 10px;
-    background: rgba(255,255,255,0.08); border: 2px solid transparent;
+    background: rgba(255,159,10,0.06); border: 2px solid rgba(255,159,10,0.12);
     color: var(--text); font-size: 14px; font-weight: 600;
     text-align: center; font-family: inherit; outline: none; transition: all 0.2s;
   }
-  .cardio-input:focus { border-color: #FF9F0A; background: rgba(255,159,10,0.08); }
+  .cardio-input:focus { border-color: #FF9F0A; background: rgba(255,159,10,0.12); }
   .cardio-notes {
     width: 100%; min-height: 44px; border-radius: 10px;
-    background: rgba(255,255,255,0.06); border: 1.5px solid transparent;
+    background: rgba(255,159,10,0.06); border: 1.5px solid rgba(255,159,10,0.12);
     color: var(--text); font-size: 13px; padding: 10px 12px;
     font-family: inherit; outline: none; resize: none; margin-bottom: 12px;
   }
@@ -1220,7 +1220,7 @@
     color: #FF9F0A; font-size: 14px; font-weight: 600;
     font-family: inherit; cursor: pointer;
   }
-  .cardio-save-btn:active { background: rgba(255,159,10,0.25); }
+  .cardio-save-btn:active { opacity: 0.8; }
 
   /* ── Daily Weigh-ins ── */
   .daily-grid {
@@ -1273,6 +1273,12 @@
   }
   .wt-expand-btn:active { transform: scale(0.9); }
   .wt-expand-btn.open { background: rgba(10,132,255,0.2); }
+
+  /* ── Weight Checkbox ── */
+  .wt-check {
+    width: 24px; height: 24px; accent-color: #30D158;
+    cursor: pointer; flex-shrink: 0;
+  }
 
   /* ── Animations ── */
   @keyframes popIn {
@@ -1348,7 +1354,7 @@
       <div class="cardio-header" onclick="document.getElementById('cardio-section').classList.toggle('open')">
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="cardio-title">🏃 Cardio</div>
-          <div style="font-size:11px;color:var(--text-tertiary);">Optional</div>
+          <div style="font-size:11px;color:#FF9F0A;opacity:0.5;">Optional</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="cardio-badge empty" id="cardio-badge">— min</div>
@@ -2129,7 +2135,7 @@ function buildExerciseList(wo) {
       const isFinal = si === ex.sets - 1 && ex.sets > 1;
       const storedWeight = lsGet(wKey(wo.id, ei, si, selectedWeek)) || '';
       const storedReps   = lsGet(rKey(wo.id, ei, si, selectedWeek)) || '';
-      const isDone = storedWeight || storedReps;
+      const isDone = storedWeight && storedReps;
       if (!isDone && !foundActive) { isActiveSet = true; foundActive = true; }
       else { isActiveSet = false; }
       // Ghost: previous week's values as placeholder
@@ -2344,7 +2350,7 @@ function refreshExerciseProgress(input) {
   rows.forEach((row, si) => {
     const hasW = lsGet(wKey(wo.id, ei, si, selectedWeek));
     const hasR = lsGet(rKey(wo.id, ei, si, selectedWeek));
-    const isDone = hasW || hasR;
+    const isDone = hasW && hasR;
     row.classList.remove('active-set', 'done-set');
     if (isDone) {
       row.classList.add('done-set');
@@ -2409,7 +2415,7 @@ function buildWeightTracker() {
         data-week="${w}"
         oninput="saveBodyWeight(this)"
       >
-      <button class="wt-save-btn" onclick="confirmSaveWeight(this, ${w})">↑</button>
+      <input type="checkbox" class="wt-check" id="wt-check-${w}" onchange="confirmSaveWeight(this, ${w})" ${val ? 'checked' : ''}>
 
       ${deltaStr ? `<div class="wt-delta" style="color:${deltaColor}">${deltaStr}</div>` : '<div class="wt-delta"></div>'}
       <button class="wt-expand-btn" onclick="toggleDailyGrid(${w})" title="Daily weigh-ins" id="expand-btn-${w}">▾</button>
@@ -2429,7 +2435,7 @@ function buildWeightTracker() {
         return '<div class="daily-row">' +
           '<div class="daily-label">' + dl + '</div>' +
           '<input type="number" inputmode="decimal" class="daily-input" placeholder="— lbs" value="' + dVal + '" data-week="' + w + '" data-day="' + di + '">' +
-          '<button class="daily-save-btn" onclick="saveDailyWeight(' + w + ',' + di + ',this)">↑</button>' +
+          '<input type="checkbox" class="wt-check" onchange="saveDailyWeight(' + w + ',' + di + ',this)" ' + (dVal ? 'checked' : '') + '>' +
         '</div>';
       }).join('');
     el.appendChild(dailyGrid);
@@ -2457,22 +2463,20 @@ function saveBodyWeight(input) {
   lsSet(bwKey(w), input.value);
 }
 
-function confirmSaveWeight(btn, weekIdx) {
+function confirmSaveWeight(cb, weekIdx) {
   const row = document.getElementById('wt-row-' + weekIdx);
   const input = row.querySelector('.wt-input');
   const val = input.value;
   lsSet(bwKey(weekIdx), val);
   saveBodyWeightRemote(weekIdx, val);
 
-  // Visual feedback
-  btn.textContent = '✓';
-  btn.classList.add('saved');
-  setTimeout(function() {
-    btn.textContent = '↑';
-    btn.classList.remove('saved');
-  }, 1500);
+  // If unchecked, clear the value
+  if (!cb.checked) {
+    input.value = '';
+    lsSet(bwKey(weekIdx), '');
+    saveBodyWeightRemote(weekIdx, '');
+  }
 
-  // Update deltas and stats without rebuilding inputs
   updateWeightDeltas();
   updateWeightStats();
 }
@@ -2645,7 +2649,7 @@ function getProgress(wo, week) {
   wo.exercises.forEach((ex, ei) => {
     total += ex.sets;
     for (let si = 0; si < ex.sets; si++) {
-      if (lsGet(wKey(wo.id, ei, si, week)) || lsGet(rKey(wo.id, ei, si, week))) completed++;
+      if (lsGet(wKey(wo.id, ei, si, week)) && lsGet(rKey(wo.id, ei, si, week))) completed++;
     }
   });
   return { total, completed };
@@ -2654,7 +2658,7 @@ function getProgress(wo, week) {
 function getExProgress(wid, ei, sets, week) {
   let completed = 0;
   for (let si = 0; si < sets; si++) {
-    if (lsGet(wKey(wid, ei, si, week)) || lsGet(rKey(wid, ei, si, week))) completed++;
+    if (lsGet(wKey(wid, ei, si, week)) && lsGet(rKey(wid, ei, si, week))) completed++;
   }
   return { completed };
 }
@@ -3804,25 +3808,18 @@ function toggleDailyGrid(week) {
   if (isOpen) updateDailyAvg(week);
 }
 
-function saveDailyWeight(week, dayIdx, btn) {
+function saveDailyWeight(week, dayIdx, cb) {
   var grid = document.getElementById('daily-grid-' + week);
   var input = grid.querySelectorAll('.daily-input')[dayIdx];
   var val = input.value;
 
+  if (!cb.checked) {
+    val = '';
+    input.value = '';
+  }
+
   lsSet('dw_' + week + '_' + dayIdx, val);
   saveDailyWeightRemote(week, dayIdx, val);
-
-  // Feedback
-  btn.textContent = '✓';
-  btn.style.background = '#30D158';
-  btn.style.color = '#000';
-  setTimeout(function() {
-    btn.textContent = '↑';
-    btn.style.background = '';
-    btn.style.color = '';
-  }, 1500);
-
-  // Update average and weekly weight
   updateDailyAvg(week);
 }
 
