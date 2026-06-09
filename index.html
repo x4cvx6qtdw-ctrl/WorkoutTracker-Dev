@@ -979,6 +979,25 @@
   }
   .ex-header-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 
+  /* ── Version Footer ── */
+  .version-footer {
+    text-align: center; padding: 20px 16px 8px;
+    font-size: 10px; color: rgba(255,255,255,0.15);
+    font-family: -apple-system, sans-serif;
+  }
+  .version-footer .version-tag {
+    display: inline-block; background: rgba(255,255,255,0.06);
+    padding: 2px 8px; border-radius: 6px; margin-bottom: 4px;
+    font-weight: 600; letter-spacing: 0.5px;
+  }
+  .version-changelog {
+    display: none; text-align: left; margin-top: 8px;
+    padding: 10px 14px; background: rgba(255,255,255,0.04);
+    border-radius: 10px; font-size: 11px; color: rgba(255,255,255,0.25);
+    line-height: 1.6;
+  }
+  .version-changelog.open { display: block; }
+
   /* ── Animations ── */
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.95) translateY(8px); }
@@ -1071,6 +1090,33 @@
   </div>
 
   <!-- ── TAB BAR ─────────────────────────────── -->
+
+  <!-- ── Version Footer ── -->
+  <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;">
+    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.3.0-dev</div>
+    <div>Training Tracker [DEV] · Built with 🦾</div>
+    <div class="version-changelog" id="changelog">
+      <strong>v1.3.0-dev</strong> — Program Builder + Images<br>
+      • Admin program builder (create/edit/delete programs)<br>
+      • Day editor with emoji and color picker<br>
+      • Inline exercise editor with image URL support<br>
+      • Exercise images for all 37 exercises<br>
+      <br>
+      <strong>v1.2.0-dev</strong> — Dynamic Programs<br>
+      • Programs stored in Supabase database<br>
+      • Load user-assigned program on login<br>
+      • Admin can assign programs to users<br>
+      <br>
+      <strong>v1.1.0</strong> — Exercise Images<br>
+      • Added workout images for all 37 exercises<br>
+      <br>
+      <strong>v1.0.0</strong> — Initial Release<br>
+      • 12-week workout tracker with 7-day split<br>
+      • Body weight, nutrition, water tracking<br>
+      • User auth, guest mode, admin dashboard<br>
+    </div>
+  </div>
+
   <!-- ── PROGRAM BUILDER ──────────────────────── -->
   <div class="builder-overlay" id="builder-overlay">
     <div class="builder-header">
