@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Training">
 <meta name="theme-color" content="#000000">
-<title>🦾 Training</title>
+<title>🦾 Training [DEV]</title>
 <style>
   :root {
     --safe-top: env(safe-area-inset-top, 44px);
@@ -998,6 +998,58 @@
   }
   .version-changelog.open { display: block; }
 
+  /* ── Progress Photos ── */
+  .wt-photo-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(10,132,255,0.12); border: 1px solid rgba(10,132,255,0.3);
+    color: #0A84FF; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .wt-photo-btn:active { background: rgba(10,132,255,0.25); transform: scale(0.9); }
+  .wt-photo-btn input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    font-size: 0;
+  }
+  .wt-photo-thumb {
+    width: 36px; height: 36px; border-radius: 8px;
+    object-fit: cover; cursor: pointer; flex-shrink: 0;
+    border: 1.5px solid rgba(10,132,255,0.3);
+    transition: transform 0.15s;
+  }
+  .wt-photo-thumb:active { transform: scale(0.9); }
+  .wt-photo-uploading {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(10,132,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #0A84FF; flex-shrink: 0;
+    animation: pulse 1s ease infinite;
+  }
+  .photo-viewer-overlay {
+    display: none; position: fixed; inset: 0; z-index: 600;
+    background: rgba(0,0,0,0.92); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    align-items: center; justify-content: center; flex-direction: column;
+    padding: 20px;
+  }
+  .photo-viewer-overlay.open { display: flex; }
+  .photo-viewer-img {
+    max-width: 100%; max-height: 70vh; border-radius: 16px;
+    object-fit: contain;
+  }
+  .photo-viewer-label {
+    color: var(--text-secondary); font-size: 14px; font-weight: 600;
+    margin-top: 12px;
+  }
+  .photo-viewer-close {
+    position: absolute; top: calc(var(--safe-top) + 12px); right: 16px;
+    font-size: 28px; color: var(--text-secondary); cursor: pointer;
+    width: 40px; height: 40px; display: flex; align-items: center;
+    justify-content: center; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+  }
+  .photo-viewer-close:active { opacity: 0.6; }
+
   /* ── Animations ── */
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.95) translateY(8px); }
@@ -1014,7 +1066,7 @@
   <div id="screen-auth">
     <div class="auth-logo">🦾</div>
     <div class="auth-title">Training Tracker</div>
-    <div class="auth-sub">12-Week Strength Program</div>
+    <div class="auth-sub">12-Week Strength Program [DEV]</div>
     <div class="auth-card">
       <div class="auth-tab-row">
         <button class="auth-tab active" id="auth-tab-login" onclick="setAuthTab('login')">Log In</button>
@@ -1028,8 +1080,8 @@
     <button class="auth-guest-btn" onclick="guestLogin()">Continue as Guest</button>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;">Try 1 workout day free · Sign up for full access</div>
     <div id="auth-version" style="margin-top:24px;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;">
-      <span style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.4.0</span>
-      <div style="margin-top:4px;">Training Tracker · Built with 🦾</div>
+      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.5.0-dev</span>
+      <div style="margin-top:4px;">Training Tracker [DEV] · Built with 🦾</div>
     </div>
   </div>
 
@@ -1095,12 +1147,19 @@
 
   <!-- ── TAB BAR ─────────────────────────────── -->
 
+  <!-- ── Photo Viewer ── -->
+  <div class="photo-viewer-overlay" id="photo-viewer" onclick="closePhotoViewer(event)">
+    <button class="photo-viewer-close" onclick="closePhotoViewer()">✕</button>
+    <img class="photo-viewer-img" id="photo-viewer-img" src="">
+    <div class="photo-viewer-label" id="photo-viewer-label"></div>
+  </div>
+
   <!-- ── Version Footer ── -->
   <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;display:none;">
-    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" >v1.4.0</div>
-    <div>Training Tracker · Built with 🦾</div>
+    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.5.0-dev</div>
+    <div>Training Tracker [DEV] · Built with 🦾</div>
     <div class="version-changelog" id="changelog">
-      <strong>v1.4.0</strong> — Program Builder + Images<br>
+      <strong>v1.5.0-dev</strong> — Program Builder + Images<br>
       • Admin program builder (create/edit/delete programs)<br>
       • Day editor with emoji and color picker<br>
       • Inline exercise editor with image URL support<br>
@@ -1292,8 +1351,8 @@ const DEFAULT_WORKOUTS = [
 let WORKOUTS = [...DEFAULT_WORKOUTS];
 
 // ── Supabase Config ───────────────────────────────────────────────────────────
-const SB_URL = 'https://uvbwwtbznowfhasqfbld.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2Ynd3dGJ6bm93Zmhhc3FmYmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjIyODksImV4cCI6MjA5NjQzODI4OX0.E2oU4FE7nfmhqYncBz2UUCsFM1WJbZCwW1aJan8mAE0';
+const SB_URL = 'https://gsxnvhnmbaicszvfgxnl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzeG52aG5tYmFpY3N6dmZneG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzIwODEsImV4cCI6MjA5NjUwODA4MX0.2QdOAaBwj5YAzLpb1UOYkMqXcOVI25zwG23k7um5ndg';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 let currentUser = null;
@@ -1437,7 +1496,7 @@ async function showApp() {
   document.getElementById('profile-initial').textContent = email === 'Guest' ? '👤' : email.charAt(0).toUpperCase();
 
   // Show admin tab if admin
-  const isAdmin = currentUser?.id === 'f815eed6-f723-4658-81af-77528378361b';
+  const isAdmin = currentUser?.id === '2ae20d9d-bb13-4f41-ad23-e9ceccb5496d';
   document.getElementById('tab-admin').style.display = isAdmin ? 'flex' : 'none';
 
   // Lock tabs for guests
@@ -1465,6 +1524,7 @@ async function showApp() {
   buildWorkoutList();
   buildWeightTracker();
   updateWeightStats();
+  loadAllPhotoThumbs();
   if (currentWorkout) buildExerciseList(currentWorkout);
 }
 
@@ -1629,7 +1689,7 @@ function switchTab(tab) {
   document.getElementById('screen-food').classList.toggle('active', tab === 'food');
   document.getElementById('screen-admin').classList.toggle('active', tab === 'admin');
   document.getElementById('screen-detail').classList.remove('active');
-  if (tab === 'weight') updateWeightStats();
+  if (tab === 'weight') { updateWeightStats(); loadAllPhotoThumbs(); }
   if (tab === 'food') buildFoodScreen();
   if (tab === 'admin') loadAdminData();
 }
@@ -2053,6 +2113,12 @@ function buildWeightTracker() {
         oninput="saveBodyWeight(this)"
       >
       <button class="wt-save-btn" onclick="confirmSaveWeight(this, ${w})">↑</button>
+      <div id="photo-slot-${w}" class="wt-photo-slot" style="display:flex;align-items:center;">
+        <div class="wt-photo-btn" title="Add progress photo">
+          📷
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(this, ${w})">
+        </div>
+      </div>
       ${deltaStr ? `<div class="wt-delta" style="color:${deltaColor}">${deltaStr}</div>` : '<div class="wt-delta"></div>'}
     `;
     el.appendChild(row);
@@ -2587,7 +2653,7 @@ async function saveTargetsRemote(t) {
 // ════════════════════════════════════════════════════════════
 
 const AVATAR_COLORS = ['#0A84FF','#FF9F0A','#30D158','#BF5AF2','#FF375F','#FF6B35','#5E5CE6','#AC8E68'];
-const ADMIN_UID = 'f815eed6-f723-4658-81af-77528378361b';
+const ADMIN_UID = '2ae20d9d-bb13-4f41-ad23-e9ceccb5496d';
 
 async function loadAdminData() {
   const listEl     = document.getElementById('admin-user-list');
@@ -3256,6 +3322,137 @@ async function deleteDay(dayId) {
   }
   builderStack.pop();
   renderProgramEditor();
+}
+
+// ════════════════════════════════════════════════════════════
+// PROGRESS PHOTOS
+// ════════════════════════════════════════════════════════════
+
+async function compressImage(file, maxDim, quality) {
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var w = img.width, h = img.height;
+        if (w > h) {
+          if (w > maxDim) { h = h * maxDim / w; w = maxDim; }
+        } else {
+          if (h > maxDim) { w = w * maxDim / h; h = maxDim; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob) {
+          resolve(blob);
+        }, 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePhotoUpload(input, week) {
+  var file = input.files[0];
+  if (!file) return;
+
+  var slot = document.getElementById('photo-slot-' + week);
+  slot.innerHTML = '<div class="wt-photo-uploading">⏳</div>';
+
+  try {
+    // Compress: max 800px, 70% quality
+    var compressed = await compressImage(file, 800, 0.7);
+    var sizeMB = (compressed.size / 1024 / 1024).toFixed(2);
+    console.log('Compressed: ' + sizeMB + 'MB');
+
+    // Upload to Supabase Storage
+    var path = currentUser.id + '/week_' + week + '.jpg';
+    var { data, error } = await sb.storage
+      .from('progress-photos')
+      .upload(path, compressed, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (error) {
+      console.warn('Upload error:', error);
+      slot.innerHTML = '<div class="wt-photo-btn" title="Add progress photo">📷<input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(this, ' + week + ')"></div>';
+      return;
+    }
+
+    // Save reference to progress_photos table
+    await sb.from('progress_photos').upsert({
+      user_id: currentUser.id,
+      week: week,
+      storage_path: path
+    }, { onConflict: 'user_id,week' });
+
+    // Show thumbnail
+    loadPhotoThumb(week);
+
+  } catch(e) {
+    console.warn('Photo error:', e);
+    slot.innerHTML = '<div class="wt-photo-btn" title="Add progress photo">📷<input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(this, ' + week + ')"></div>';
+  }
+}
+
+async function loadPhotoThumb(week) {
+  var slot = document.getElementById('photo-slot-' + week);
+  if (!slot) return;
+
+  var path = currentUser.id + '/week_' + week + '.jpg';
+  var { data } = await sb.storage
+    .from('progress-photos')
+    .createSignedUrl(path, 3600);
+
+  if (data && data.signedUrl) {
+    slot.innerHTML = '<img class="wt-photo-thumb" src="' + data.signedUrl + '" onclick="viewPhoto(' + week + ')" onerror="showPhotoBtn(' + week + ')">' +
+      '<div class="wt-photo-btn" style="width:22px;height:22px;font-size:10px;margin-left:4px;" title="Replace photo">↺<input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(this, ' + week + ')"></div>';
+  } else {
+    showPhotoBtn(week);
+  }
+}
+
+function showPhotoBtn(week) {
+  var slot = document.getElementById('photo-slot-' + week);
+  if (slot) {
+    slot.innerHTML = '<div class="wt-photo-btn" title="Add progress photo">📷<input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(this, ' + week + ')"></div>';
+  }
+}
+
+async function loadAllPhotoThumbs() {
+  if (isGuest || !currentUser) return;
+  var { data: photos } = await sb.from('progress_photos')
+    .select('week')
+    .eq('user_id', currentUser.id);
+
+  if (photos) {
+    photos.forEach(function(p) {
+      loadPhotoThumb(p.week);
+    });
+  }
+}
+
+async function viewPhoto(week) {
+  var path = currentUser.id + '/week_' + week + '.jpg';
+  var { data } = await sb.storage
+    .from('progress-photos')
+    .createSignedUrl(path, 3600);
+
+  if (data && data.signedUrl) {
+    document.getElementById('photo-viewer-img').src = data.signedUrl;
+    document.getElementById('photo-viewer-label').textContent = 'Week ' + (week + 1) + ' Progress Photo';
+    document.getElementById('photo-viewer').classList.add('open');
+  }
+}
+
+function closePhotoViewer(e) {
+  if (!e || e.target === document.getElementById('photo-viewer') || e.target.closest('.photo-viewer-close')) {
+    document.getElementById('photo-viewer').classList.remove('open');
+  }
 }
 
 </script>
