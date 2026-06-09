@@ -1027,6 +1027,10 @@
     </div>
     <button class="auth-guest-btn" onclick="guestLogin()">Continue as Guest</button>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;">Try 1 workout day free · Sign up for full access</div>
+    <div id="auth-version" style="margin-top:24px;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;">
+      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.4.0-dev</span>
+      <div style="margin-top:4px;">Training Tracker [DEV] · Built with 🦾</div>
+    </div>
   </div>
 
   <!-- ── HOME SCREEN ─────────────────────────── -->
@@ -1092,11 +1096,11 @@
   <!-- ── TAB BAR ─────────────────────────────── -->
 
   <!-- ── Version Footer ── -->
-  <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;">
-    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.3.0-dev</div>
+  <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;display:none;">
+    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.4.0-dev</div>
     <div>Training Tracker [DEV] · Built with 🦾</div>
     <div class="version-changelog" id="changelog">
-      <strong>v1.3.0-dev</strong> — Program Builder + Images<br>
+      <strong>v1.4.0-dev</strong> — Program Builder + Images<br>
       • Admin program builder (create/edit/delete programs)<br>
       • Day editor with emoji and color picker<br>
       • Inline exercise editor with image URL support<br>
@@ -1401,6 +1405,7 @@ function guestLogin() {
 
 function showAuthScreen() {
   document.getElementById('screen-auth').style.display = 'flex';
+  document.getElementById('version-footer').style.display = 'none';
   document.getElementById('screen-home').classList.remove('active');
   document.getElementById('screen-weight').classList.remove('active');
   document.getElementById('screen-food').classList.remove('active');
@@ -1410,8 +1415,10 @@ function showAuthScreen() {
 
 async function showApp() {
   document.getElementById('screen-auth').style.display = 'none';
+  var authVer = document.getElementById('auth-version'); if (authVer) authVer.style.display = 'none';
   document.getElementById('screen-home').classList.add('active');
   document.getElementById('tab-bar').style.display = 'flex';
+  document.getElementById('version-footer').style.display = 'block';
 
   // Upsert profile for registered users
   if (!isGuest && currentUser?.id) {
@@ -1449,6 +1456,7 @@ async function showApp() {
   }
 
   await loadUserProgram();
+  if (weekOffset > 0 && selectedWeek < weekOffset) selectedWeek = weekOffset;
   buildWeekScroller();
   buildWorkoutList();
   buildWeightTracker();
@@ -1496,7 +1504,8 @@ async function loadUserProgram() {
   if (isGuest) return;
   try {
     // Get user's program_id from profile
-    const { data: profile } = await sb.from('profiles').select('program_id').eq('id', currentUser.id).single();
+    const { data: profile } = await sb.from('profiles').select('program_id,week_offset').eq('id', currentUser.id).single();
+    weekOffset = (profile && profile.week_offset) ? profile.week_offset : 0;
     if (!profile || !profile.program_id) return; // Use default
 
     // Load program days
@@ -1585,6 +1594,7 @@ function hideSyncIndicator() {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let selectedWeek   = 0;
+let weekOffset     = 0;
 let currentTab     = 'workouts';
 let currentWorkout = null;
 
@@ -1646,7 +1656,9 @@ function showGuestUpgrade(feature) {
 function buildWeekScroller() {
   const el = document.getElementById('week-scroller');
   el.innerHTML = '';
-  for (let w = 0; w < getWeeks(); w++) {
+  const totalWeeks = getWeeks();
+  for (let i = 0; i < totalWeeks; i++) {
+    const w = weekOffset + i;
     const btn = document.createElement('button');
     btn.className = 'week-btn' + (w === selectedWeek ? ' selected' : '');
     btn.setAttribute('data-week', w);
@@ -1868,7 +1880,8 @@ function renderExHistory(card, wo, ei) {
   // Build per-week data for set 1 (representative set)
   const weekLabels = [], weightData = [], repsData = [];
   let maxWeight = 0;
-  for (let w = 0; w < getWeeks(); w++) {
+  for (let i = 0; i < getWeeks(); i++) {
+    const w = weekOffset + i;
     const wt = parseFloat(lsGet(wKey(wo.id, ei, 0, w))) || null;
     const rp = parseFloat(lsGet(rKey(wo.id, ei, 0, w))) || null;
     weekLabels.push('W' + (w+1));
@@ -1881,10 +1894,11 @@ function renderExHistory(card, wo, ei) {
   drawLineChart(canvasEl, weekLabels, weightData, wo.color, 'lbs');
 
   // ── History table (all sets, all weeks with data) ──
-  const filledWeeks = weekLabels.map((_, w) =>
-    Array.from({length: ex.sets}, (_, si) => lsGet(wKey(wo.id, ei, si, w)) || lsGet(rKey(wo.id, ei, si, w)))
-    .some(Boolean) ? w : null
-  ).filter(w => w !== null);
+  const filledWeeks = weekLabels.map((_, idx) => {
+    const w = weekOffset + idx;
+    return Array.from({length: ex.sets}, (_, si) => lsGet(wKey(wo.id, ei, si, w)) || lsGet(rKey(wo.id, ei, si, w)))
+      .some(Boolean) ? w : null;
+  }).filter(w => w !== null);
 
   if (!filledWeeks.length) {
     tableEl.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);font-size:12px;padding:8px 0;">No data logged yet</div>';
@@ -1901,7 +1915,7 @@ function renderExHistory(card, wo, ei) {
   for (let si = 0; si < ex.sets; si++) {
     const isFinal = si === ex.sets - 1 && ex.sets > 1;
     // Find PR weight across all weeks for this set
-    const allWeights = Array.from({length: getWeeks()}, (_, w) => parseFloat(lsGet(wKey(wo.id, ei, si, w)))).filter(Boolean);
+    const allWeights = Array.from({length: getWeeks()}, (_, i) => parseFloat(lsGet(wKey(wo.id, ei, si, weekOffset + i)))).filter(Boolean);
     const prWeight = allWeights.length ? Math.max(...allWeights) : null;
 
     html += `<tr><td>${isFinal ? '🔥' : ''}S${si+1}</td>`;
@@ -2013,7 +2027,9 @@ function saveAndExit() {
 function buildWeightTracker() {
   const el = document.getElementById('wt-list');
   el.innerHTML = '';
-  for (let w = 0; w < getWeeks(); w++) {
+  var totalWeeks = getWeeks();
+  for (let i = 0; i < totalWeeks; i++) {
+    const w = weekOffset + i;
     const val   = lsGet(bwKey(w)) || '';
     const prevVal = w > 0 ? (lsGet(bwKey(w-1)) || '') : '';
     const isCur = w === selectedWeek;
@@ -2070,7 +2086,8 @@ function confirmSaveWeight(btn, weekIdx) {
 }
 
 function updateWeightDeltas() {
-  for (var w = 0; w < getWeeks(); w++) {
+  for (var i = 0; i < getWeeks(); i++) {
+    var w = weekOffset + i;
     var row = document.getElementById('wt-row-' + w);
     if (!row) continue;
     var deltaEl = row.querySelector('.wt-delta');
@@ -2090,7 +2107,7 @@ function updateWeightDeltas() {
 
 function updateWeightStats() {
   const weights = Array.from({length: getWeeks()}, (_, i) => {
-    const v = lsGet(bwKey(i));
+    const v = lsGet(bwKey(weekOffset + i));
     return v ? parseFloat(v) : null;
   }).filter(v => v !== null);
 
@@ -2222,10 +2239,10 @@ function drawBodyWeightChart() {
   const canvas = document.getElementById('wt-chart-canvas');
   if (!canvas) return;
   const data = Array.from({length: getWeeks()}, (_, i) => {
-    const v = lsGet(bwKey(i));
+    const v = lsGet(bwKey(weekOffset + i));
     return v ? parseFloat(v) : null;
   });
-  const labels = Array.from({length: getWeeks()}, (_, i) => 'W'+(i+1));
+  const labels = Array.from({length: getWeeks()}, (_, i) => 'W'+(weekOffset+i+1));
   drawLineChart(canvas, labels, data, '#0A84FF', 'lbs');
 }
 
@@ -2777,7 +2794,24 @@ async function populateProgramDropdowns() {
 
 async function assignProgram(uid, programId) {
   showSyncIndicator('saving');
-  await sb.from('profiles').update({ program_id: programId || null }).eq('id', uid);
+  // Get current week_offset for this user
+  var { data: prof } = await sb.from('profiles').select('week_offset').eq('id', uid).single();
+  var currentOffset = (prof && prof.week_offset) ? prof.week_offset : 0;
+
+  // Ask admin if this is a continuation (extend weeks) or fresh start
+  var newOffset = currentOffset;
+  if (programId) {
+    var extend = confirm('Continue from Week ' + (currentOffset + 13) + '?\n\nOK = Continue (weeks ' + (currentOffset + 13) + '-' + (currentOffset + 24) + ')\nCancel = Start fresh (weeks 1-12)');
+    if (extend) {
+      newOffset = currentOffset + 12;
+    } else {
+      newOffset = 0;
+    }
+  } else {
+    newOffset = 0;
+  }
+
+  await sb.from('profiles').update({ program_id: programId || null, week_offset: newOffset }).eq('id', uid);
   hideSyncIndicator();
 }
 
