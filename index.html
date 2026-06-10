@@ -1604,7 +1604,7 @@
     <div style="padding:0 16px 12px;margin-top:4px;">
       <div class="section-label">Weekly Weigh-Ins</div>
     </div>
-    <div class="wt-list" id="wt-list"></div>
+    <div class="wt-list" id="wt-list" style="display:none;"></div>
     <div style="height:20px;"></div>
   </div>
 
@@ -4290,7 +4290,9 @@ function onDailyWeightInput(week) {
         var weekInput = row.querySelector('.wt-input');
         if (weekInput) weekInput.value = avg;
       }
-      // Also update measurement weight if visible
+      // Update measurement card display
+      var measAvg = document.getElementById('meas-week-avg-' + week);
+      if (measAvg) measAvg.innerHTML = avg + ' <span style="font-size:13px;color:rgba(255,159,10,0.4);font-weight:600;">lbs</span>';
       saveBodyWeightRemote(week, avg);
     } else {
       avgEl.textContent = 'avg: —';
@@ -4492,37 +4494,60 @@ function buildMeasurements() {
   container.innerHTML = '';
   
   var totalWeeks = getWeeks();
+  var dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  
   for (var i = 0; i < totalWeeks; i++) {
     var w = weekOffset + i;
     var isCur = w === selectedWeek;
     var hasData = MEAS_FIELDS.some(function(f) { return lsGet('meas_' + w + '_' + f); });
+    var weekWeight = lsGet(bwKey(w)) || '';
+    
+    // Calculate daily average
+    var dailyVals = [];
+    for (var d = 0; d < 7; d++) {
+      var dv = lsGet('dw_' + w + '_' + d);
+      if (dv && parseFloat(dv) > 0) dailyVals.push(parseFloat(dv));
+    }
+    var avgStr = dailyVals.length > 0 ? (dailyVals.reduce(function(a,b){return a+b;},0) / dailyVals.length).toFixed(1) : '';
     
     var section = document.createElement('div');
     section.className = 'meas-section' + (isCur ? ' open' : '');
     section.id = 'meas-section-' + w;
     
+    // Build daily rows
+    var dailyHtml = dayLabels.map(function(dl, di) {
+      var dVal = lsGet('dw_' + w + '_' + di) || '';
+      return '<div class="daily-row">' +
+        '<div class="daily-label">' + dl + '</div>' +
+        '<input type="number" inputmode="decimal" class="daily-input" placeholder="— lbs" value="' + dVal + '" data-week="' + w + '" data-day="' + di + '" oninput="onDailyWeightInput(' + w + ')">' +
+      '</div>';
+    }).join('');
+    
     section.innerHTML =
       '<div class="meas-header" onclick="document.getElementById(\'meas-section-' + w + '\').classList.toggle(\'open\')">' +
         '<div class="meas-title">Week ' + (w + 1) + (isCur ? ' <span style="font-size:10px;background:rgba(255,159,10,0.15);padding:1px 6px;border-radius:4px;">now</span>' : '') + '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
-          '<span style="font-size:11px;color:' + (hasData ? '#FF9F0A' : 'var(--text-tertiary)') + ';">' + (hasData ? '✓' : '—') + '</span>' +
-          '<span class="meas-chevron">›</span>' +
+          '<span style="font-size:13px;font-weight:700;color:' + (weekWeight ? '#FF9F0A' : 'var(--text-tertiary)') + ';">' + (weekWeight ? weekWeight + ' lbs' : '—') + '</span>' +
+          '<span class="meas-chevron">\u203A</span>' +
         '</div>' +
       '</div>' +
       '<div class="meas-body">' +
-        '<div style="margin-bottom:14px;padding:14px;background:rgba(255,159,10,0.06);border-radius:12px;border:1px solid rgba(255,159,10,0.15);">' +
-          '<div style="font-size:11px;font-weight:700;color:#FF9F0A;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Body Weight</div>' +
-          '<div style="display:flex;align-items:center;gap:10px;">' +
-            '<input type="number" inputmode="decimal" style="flex:1;height:48px;border-radius:12px;background:rgba(255,159,10,0.08);border:2px solid rgba(255,159,10,0.2);color:#fff;font-size:22px;font-weight:800;text-align:center;font-family:inherit;outline:none;" placeholder="— lbs" value="' + (lsGet(bwKey(w)) || '') + '" oninput="quickSaveWeight(' + w + ', this.value)">' +
-            '<span style="font-size:14px;color:rgba(255,159,10,0.4);font-weight:600;">lbs</span>' +
+        '<div style="margin-bottom:14px;">' +
+          '<div class="daily-grid-title"><span style="color:#FF9F0A;">Daily Weigh-Ins</span><span class="daily-avg" id="daily-avg-' + w + '">avg: ' + (avgStr ? avgStr + ' lbs' : '—') + '</span></div>' +
+          dailyHtml +
+        '</div>' +
+        '<div style="margin-bottom:14px;padding:12px;background:rgba(255,159,10,0.06);border-radius:12px;border:1px solid rgba(255,159,10,0.15);">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+            '<div style="font-size:11px;font-weight:700;color:#FF9F0A;text-transform:uppercase;letter-spacing:1px;">Weekly Average</div>' +
+            '<div style="font-size:20px;font-weight:800;color:#fff;" id="meas-week-avg-' + w + '">' + (avgStr || weekWeight || '—') + ' <span style="font-size:13px;color:rgba(255,159,10,0.4);font-weight:600;">lbs</span></div>' +
           '</div>' +
         '</div>' +
         '<div style="margin-bottom:10px;">' +
-          '<div onclick="document.getElementById(\'meas-detail-' + w + '\').classList.toggle(\'open\')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 0;">' +
-            '<span style="font-size:12px;color:var(--text-tertiary);font-weight:600;">📏 Body Measurements (optional)</span>' +
+          '<div onclick="this.nextElementSibling.classList.toggle(\'open\')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 0;">' +
+            '<span style="font-size:12px;color:var(--text-tertiary);font-weight:600;">\ud83d\udccf Body Measurements (optional)</span>' +
             '<span style="font-size:12px;color:var(--text-tertiary);">+</span>' +
           '</div>' +
-          '<div id="meas-detail-' + w + '" class="meas-detail-collapse">' +
+          '<div class="meas-detail-collapse">' +
             '<div class="meas-grid" style="margin-top:8px;">' +
               MEAS_FIELDS.map(function(f) {
                 var val = lsGet('meas_' + w + '_' + f) || '';
