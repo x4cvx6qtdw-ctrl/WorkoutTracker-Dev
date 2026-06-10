@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="apple-mobile-web-app-title" content="MackTrak">
 <meta name="theme-color" content="#000000">
-<title>🦾 Training [DEV]</title>
+<title>MackTrak [DEV]</title>
 <style>
   :root {
     --safe-top: env(safe-area-inset-top, 44px);
@@ -595,7 +595,7 @@
     color: var(--text-tertiary); font-family: inherit; transition: all 0.2s; cursor: pointer;
     text-align: center;
   }
-  .auth-tab.active { background: var(--blue); color: #fff; }
+  .auth-tab.active { background: #FF9F0A; color: #000; }
   .auth-input {
     width: 100%; height: 48px; border-radius: 14px;
     background: rgba(255,255,255,0.08); border: 2px solid transparent;
@@ -607,8 +607,8 @@
   .auth-input::placeholder { color: var(--text-tertiary); }
   .auth-submit {
     width: 100%; height: 50px; border-radius: 14px;
-    background: linear-gradient(135deg, #0A84FF, #0055CC);
-    color: #fff; font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, #FF9F0A, #CC7A00);
+    color: #000; font-size: 16px; font-weight: 700;
     font-family: inherit; cursor: pointer; margin-top: 4px;
     transition: opacity 0.2s;
   }
@@ -1294,9 +1294,37 @@
 
   <!-- ── AUTH SCREEN ──────────────────────────── -->
   <div id="screen-auth">
-    <div class="auth-logo">🦾</div>
-    <div class="auth-title">Training Tracker</div>
-    <div class="auth-sub">12-Week Strength Program [DEV]</div>
+    <div style="text-align:center;margin-bottom:8px;">
+      <div style="position:relative;display:inline-block;">
+        <svg viewBox="0 0 320 200" width="280" height="175" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="300" height="180" rx="90" ry="90" fill="rgba(255,159,10,0.06)"/>
+          <rect x="10" y="10" width="300" height="180" rx="90" ry="90" fill="none" stroke="#FF9F0A" stroke-width="1.5" opacity="0.7"/>
+          <rect x="20" y="18" width="280" height="164" rx="82" ry="82" fill="none" stroke="#FF9F0A" stroke-width="1" opacity="0.5"/>
+          <rect x="30" y="26" width="260" height="148" rx="74" ry="74" fill="none" stroke="#FF9F0A" stroke-width="1" opacity="0.4"/>
+          <rect x="40" y="34" width="240" height="132" rx="66" ry="66" fill="none" stroke="#FF9F0A" stroke-width="1" opacity="0.35"/>
+          <rect x="50" y="42" width="220" height="116" rx="58" ry="58" fill="none" stroke="#FF9F0A" stroke-width="1" opacity="0.3"/>
+          <rect x="60" y="50" width="200" height="100" rx="50" ry="50" fill="none" stroke="#FF9F0A" stroke-width="1" opacity="0.25"/>
+          <rect x="70" y="58" width="180" height="84" rx="42" ry="42" fill="none" stroke="#FF9F0A" stroke-width="1" opacity="0.2"/>
+          <rect x="80" y="66" width="160" height="68" rx="34" ry="34" fill="none" stroke="#FF9F0A" stroke-width="1" opacity="0.15"/>
+          <text x="17" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.5">8</text>
+          <text x="27" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.45">7</text>
+          <text x="37" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.4">6</text>
+          <text x="47" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.35">5</text>
+          <text x="57" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.3">4</text>
+          <text x="67" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.25">3</text>
+          <text x="77" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.2">2</text>
+          <text x="87" y="103" fill="#FF9F0A" font-size="8" font-weight="700" font-family="-apple-system,sans-serif" opacity="0.15">1</text>
+          <line x1="160" y1="10" x2="160" y2="30" stroke="#FF9F0A" stroke-width="2" opacity="0.5" stroke-dasharray="3,2"/>
+          <line x1="160" y1="170" x2="160" y2="190" stroke="#FF9F0A" stroke-width="2" opacity="0.5" stroke-dasharray="3,2"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div style="font-size:10px;color:#FF9F0A;letter-spacing:5px;text-transform:uppercase;font-weight:700;">Fitness Protocol</div>
+          <div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px;margin:2px 0;">MACK<span style="color:#FF9F0A;">TRAK</span></div>
+          <div style="width:120px;height:1.5px;background:rgba(255,159,10,0.3);margin:3px 0;"></div>
+          <div style="font-size:9px;color:rgba(255,159,10,0.6);letter-spacing:4px;text-transform:uppercase;font-weight:600;">Track · Push · Grow</div>
+        </div>
+      </div>
+    </div>
     <div class="auth-card">
       <div class="auth-tab-row">
         <button class="auth-tab active" id="auth-tab-login" onclick="setAuthTab('login')">Log In</button>
@@ -1311,7 +1339,7 @@
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;">Try 1 workout day free · Sign up for full access</div>
     <div id="auth-version" style="margin-top:24px;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;">
       <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.8.0-dev</span>
-      <div style="margin-top:4px;">Training Tracker [DEV] · Built with 🦾</div>
+      <div style="margin-top:4px;">MackTrak [DEV] · Built with 🦾</div>
     </div>
   </div>
 
@@ -1319,7 +1347,7 @@
   <div id="screen-home" class="screen">
     <div id="home-header">
       <div class="header-eyebrow">12-Week Program</div>
-      <div class="header-title">🦾 Training</div>
+      <div class="header-title">🦾 MackTrak</div>
       <div class="profile-badge" id="profile-badge" style="display:none;">
         <div class="profile-avatar" id="profile-initial">?</div>
         <div class="profile-email" id="profile-email"></div>
@@ -2002,7 +2030,7 @@ function showGuestUpgrade(feature) {
     <div style="font-size:48px;margin-bottom:12px;">🔒</div>
     <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">${feature}</div>
     <div style="font-size:14px;color:rgba(255,255,255,0.45);margin-bottom:24px;line-height:1.5;">Create a free account to unlock all 12 weeks, nutrition tracking, weight logging, and cloud sync.</div>
-    <button onclick="handleLogout()" style="width:100%;height:50px;border-radius:14px;background:linear-gradient(135deg,#0A84FF,#0055CC);color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;border:none;margin-bottom:10px;">Sign Up Free</button>
+    <button onclick="handleLogout()" style="width:100%;height:50px;border-radius:14px;background:linear-gradient(135deg,#FF9F0A,#CC7A00);color:#000;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;border:none;margin-bottom:10px;">Sign Up Free</button>
     <button onclick="document.getElementById('guest-upgrade-toast').style.display='none'" style="width:100%;height:44px;border-radius:12px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;border:none;">Maybe Later</button>
   `;
 }
