@@ -1520,10 +1520,13 @@
   <div id="screen-detail" class="screen">
     <div id="detail-header">
       <button class="back-btn" onclick="showHome()">‹ Back</button>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div></div>
+      <div class="detail-top">
+        <div>
+          <div class="detail-eyebrow" id="detail-eyebrow"></div>
+          <div class="detail-title" id="detail-title"></div>
+        </div>
         <div id="workout-timer-wrap">
-          <button class="workout-timer-start" id="workout-timer-start" onclick="startWorkoutTimer()">▶ Start Workout Timer</button>
+          <button class="workout-timer-start" id="workout-timer-start" onclick="startWorkoutTimer()">▶ Start Timer</button>
           <div class="workout-timer" id="workout-timer" style="display:none;">
             <div class="timer-dot" id="timer-dot"></div>
             <span id="workout-timer-text">0:00</span>
@@ -1532,15 +1535,9 @@
           </div>
         </div>
       </div>
-      <div class="detail-top">
-        <div>
-          <div class="detail-eyebrow" id="detail-eyebrow"></div>
-          <div class="detail-title" id="detail-title"></div>
-        </div>
-        <div class="pct-badge" id="detail-pct-badge">
-          <div class="pct-num" id="detail-pct">0%</div>
-          <div class="pct-label">done</div>
-        </div>
+      <div class="pct-badge" id="detail-pct-badge" style="display:none;">
+        <div class="pct-num" id="detail-pct">0%</div>
+        <div class="pct-label">done</div>
       </div>
       <div class="detail-progress-track">
         <div class="detail-progress-fill" id="detail-progress-fill"></div>
@@ -2359,7 +2356,7 @@ function showDetail(wo) {
   document.getElementById('detail-title').textContent = wo.emoji + ' ' + wo.name;
 
   const badge = document.getElementById('detail-pct-badge');
-  badge.style.background = 'rgba(255,159,10,0.13)';
+  // badge hidden
   document.getElementById('detail-pct').style.color = '#FF9F0A';
   document.getElementById('detail-progress-fill').style.background = 'linear-gradient(90deg,#FF9F0A,#CC7A00)';
 
