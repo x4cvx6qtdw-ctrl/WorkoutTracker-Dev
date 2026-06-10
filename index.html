@@ -2853,6 +2853,91 @@ function updateWeightStats() {
   }, 50);
 }
 
+function drawLineChart(canvas, labels, data, color, unit) {
+  if (!canvas || !data || data.length < 2) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  var W = rect.width;
+  var H = rect.height;
+  ctx.clearRect(0, 0, W, H);
+  
+  var pad = { top: 10, right: 10, bottom: 24, left: 40 };
+  var plotW = W - pad.left - pad.right;
+  var plotH = H - pad.top - pad.bottom;
+  
+  var min = Math.min.apply(null, data);
+  var max = Math.max.apply(null, data);
+  var range = max - min || 1;
+  min -= range * 0.1;
+  max += range * 0.1;
+  range = max - min;
+  
+  function x(i) { return pad.left + (i / (data.length - 1)) * plotW; }
+  function y(v) { return pad.top + plotH - ((v - min) / range) * plotH; }
+  
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (var g = 0; g < 4; g++) {
+    var gy = pad.top + (plotH / 3) * g;
+    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(W - pad.right, gy); ctx.stroke();
+  }
+  
+  // Fill under line
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(data[0]));
+  for (var i = 1; i < data.length; i++) ctx.lineTo(x(i), y(data[i]));
+  ctx.lineTo(x(data.length - 1), pad.top + plotH);
+  ctx.lineTo(x(0), pad.top + plotH);
+  ctx.closePath();
+  var grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+  grad.addColorStop(0, color + '30');
+  grad.addColorStop(1, color + '05');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(data[0]));
+  for (var j = 1; j < data.length; j++) ctx.lineTo(x(j), y(data[j]));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  
+  // Dots
+  for (var k = 0; k < data.length; k++) {
+    ctx.beginPath();
+    ctx.arc(x(k), y(data[k]), 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x(k), y(data[k]), 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#000';
+    ctx.fill();
+  }
+  
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  for (var l = 0; l < labels.length; l++) {
+    ctx.fillText(labels[l], x(l), H - 4);
+  }
+  
+  // Y-axis labels
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  for (var m = 0; m < 4; m++) {
+    var val = min + (range / 3) * (3 - m);
+    ctx.fillText(val.toFixed(0), pad.left - 6, pad.top + (plotH / 3) * m + 4);
+  }
+}
+
 function drawBodyWeightChart() {
   var chartWrap = document.getElementById('wt-chart-wrap');
   if (chartWrap) chartWrap.style.display = 'block';
