@@ -1284,6 +1284,13 @@
   }
 
   /* ── Workout Timer ── */
+  .workout-timer-start {
+    padding: 5px 14px; border-radius: 8px;
+    background: rgba(255,159,10,0.12); border: 1px solid rgba(255,159,10,0.25);
+    color: #FF9F0A; font-size: 12px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+  }
+  .workout-timer-start:active { opacity: 0.7; }
   .workout-timer {
     display: flex; align-items: center; gap: 6px;
     font-size: 13px; font-weight: 700; color: #FF9F0A;
@@ -1389,7 +1396,7 @@
     <button class="auth-guest-btn" onclick="guestLogin()">Continue as Guest</button>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;">Try 1 workout day free · Sign up for full access</div>
     <div id="auth-version" style="margin-top:24px;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;">
-      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.8.0-dev</span>
+      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.8.6-dev</span>
       <div style="margin-top:4px;">MackTrak [DEV] · Built with 🦾</div>
     </div>
   </div>
@@ -1444,9 +1451,14 @@
       <button class="back-btn" onclick="showHome()">‹ Back</button>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div></div>
-        <div class="workout-timer" id="workout-timer" style="display:none;">
-          <div class="timer-dot"></div>
-          <span id="workout-timer-text">0:00</span>
+        <div id="workout-timer-wrap">
+          <button class="workout-timer-start" id="workout-timer-start" onclick="startWorkoutTimer()">▶ Start Workout Timer</button>
+          <div class="workout-timer" id="workout-timer" style="display:none;">
+            <div class="timer-dot" id="timer-dot"></div>
+            <span id="workout-timer-text">0:00</span>
+            <button id="timer-pause-btn" onclick="togglePauseTimer()" style="background:none;border:none;color:#FF9F0A;font-size:13px;cursor:pointer;padding:2px 6px;font-weight:700;">❚❚</button>
+            <button onclick="stopWorkoutTimer()" style="background:none;border:none;color:rgba(255,159,10,0.3);font-size:14px;cursor:pointer;padding:2px 4px;">✕</button>
+          </div>
         </div>
       </div>
       <div class="detail-top">
@@ -1559,10 +1571,10 @@
 
   <!-- ── Version Footer ── -->
   <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;display:none;">
-    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.8.0-dev</div>
+    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.8.6-dev</div>
     <div>MackTrak [DEV] · Built with 🦾</div>
     <div class="version-changelog" id="changelog">
-      <strong>v1.8.0-dev</strong> — Program Builder + Images<br>
+      <strong>v1.8.6-dev</strong> — Program Builder + Images<br>
       • Admin program builder (create/edit/delete programs)<br>
       • Day editor with emoji and color picker<br>
       • Inline exercise editor with image URL support<br>
@@ -2273,7 +2285,7 @@ function showDetail(wo) {
   document.getElementById('detail-pct').style.color = '#FF9F0A';
   document.getElementById('detail-progress-fill').style.background = 'linear-gradient(90deg,#FF9F0A,#CC7A00)';
 
-  startWorkoutTimer();
+  resetWorkoutTimerUI();
   buildExerciseList(wo);
   updateDetailProgress(wo);
   loadCardio();
@@ -2583,7 +2595,7 @@ function buildWeightTracker() {
       <input type="number" inputmode="decimal" class="wt-input"
         placeholder="— lbs" value="${val}"
         data-week="${w}"
-        oninput="saveBodyWeight(this)"
+        oninput="saveBodyWeight(this); updateWeightDeltas(); updateWeightStats(); drawBodyWeightChart();"
       >
       <input type="checkbox" class="wt-check" id="wt-check-${w}" onchange="confirmSaveWeight(this, ${w})" ${val ? 'checked' : ''}>
 
@@ -2604,7 +2616,7 @@ function buildWeightTracker() {
         var dVal = lsGet('dw_' + w + '_' + di) || '';
         return '<div class="daily-row">' +
           '<div class="daily-label">' + dl + '</div>' +
-          '<input type="number" inputmode="decimal" class="daily-input" placeholder="— lbs" value="' + dVal + '" data-week="' + w + '" data-day="' + di + '">' +
+          '<input type="number" inputmode="decimal" class="daily-input" placeholder="— lbs" value="' + dVal + '" data-week="' + w + '" data-day="' + di + '" oninput="onDailyWeightInput(' + w + ')">' +
           '<input type="checkbox" class="wt-check" onchange="saveDailyWeight(' + w + ',' + di + ',this)" ' + (dVal ? 'checked' : '') + '>' +
         '</div>';
       }).join('');
@@ -2680,8 +2692,8 @@ function updateWeightStats() {
   const statsEl  = document.getElementById('wt-stats');
   const cardsEl  = document.getElementById('wt-stat-cards');
 
-  if (weights.length < 2) {
-    statsEl.innerHTML = `<div class="section-label" style="padding-bottom:8px">Log 2+ weeks to see stats</div>`;
+  if (weights.length < 1) {
+    statsEl.innerHTML = `<div class="section-label" style="padding-bottom:8px">Log your first weigh-in</div>`;
     cardsEl.style.display = 'none';
     document.getElementById('wt-chart-wrap').style.display = 'none';
     return;
@@ -2802,6 +2814,8 @@ function drawLineChart(canvas, labels, data, color, unit) {
 }
 
 function drawBodyWeightChart() {
+  var chartWrap = document.getElementById('wt-chart-wrap');
+  if (chartWrap) chartWrap.style.display = 'block';
   const canvas = document.getElementById('wt-chart-canvas');
   if (!canvas) return;
   const data = Array.from({length: getWeeks()}, (_, i) => {
@@ -3983,6 +3997,42 @@ function toggleDailyGrid(week) {
   if (isOpen) updateDailyAvg(week);
 }
 
+function onDailyWeightInput(week) {
+  // Real-time average calculation as user types
+  var grid = document.getElementById('daily-grid-' + week);
+  if (!grid) return;
+  var inputs = grid.querySelectorAll('.daily-input');
+  var vals = [];
+  inputs.forEach(function(inp) {
+    var v = parseFloat(inp.value);
+    if (v > 0) vals.push(v);
+  });
+  
+  var avgEl = document.getElementById('daily-avg-' + week);
+  if (avgEl) {
+    if (vals.length > 0) {
+      var avg = (vals.reduce(function(a,b) { return a+b; }, 0) / vals.length).toFixed(1);
+      avgEl.textContent = 'avg: ' + avg + ' lbs';
+      // Auto-update weekly weight
+      var row = document.getElementById('wt-row-' + week);
+      if (row) {
+        var weekInput = row.querySelector('.wt-input');
+        if (weekInput) {
+          weekInput.value = avg;
+          lsSet(bwKey(week), avg);
+        }
+      }
+    } else {
+      avgEl.textContent = 'avg: —';
+    }
+  }
+  
+  // Update stats and chart in real-time
+  updateWeightDeltas();
+  updateWeightStats();
+  drawBodyWeightChart();
+}
+
 function saveDailyWeight(week, dayIdx, cb) {
   var grid = document.getElementById('daily-grid-' + week);
   var input = grid.querySelectorAll('.daily-input')[dayIdx];
@@ -4055,29 +4105,64 @@ async function loadDailyWeights() {
 
 var workoutTimerInterval = null;
 var workoutTimerStart = null;
+var workoutTimerPaused = false;
+var workoutTimerPausedElapsed = 0;
 
 function startWorkoutTimer() {
-  stopWorkoutTimer();
   workoutTimerStart = Date.now();
-  var el = document.getElementById('workout-timer');
-  if (el) el.style.display = 'flex';
+  workoutTimerPaused = false;
+  workoutTimerPausedElapsed = 0;
+  var startBtn = document.getElementById('workout-timer-start');
+  var timerEl = document.getElementById('workout-timer');
+  var dot = document.getElementById('timer-dot');
+  var pauseBtn = document.getElementById('timer-pause-btn');
+  if (startBtn) startBtn.style.display = 'none';
+  if (timerEl) timerEl.style.display = 'flex';
+  if (dot) { dot.style.animation = 'pulse 1.5s ease infinite'; dot.style.opacity = '1'; }
+  if (pauseBtn) pauseBtn.textContent = '❚❚';
+  if (workoutTimerInterval) clearInterval(workoutTimerInterval);
   workoutTimerInterval = setInterval(updateWorkoutTimer, 1000);
+  updateWorkoutTimer();
 }
 
 function updateWorkoutTimer() {
   if (!workoutTimerStart) return;
   var elapsed = Math.floor((Date.now() - workoutTimerStart) / 1000);
-  var mins = Math.floor(elapsed / 60);
+  var hrs = Math.floor(elapsed / 3600);
+  var mins = Math.floor((elapsed % 3600) / 60);
   var secs = elapsed % 60;
   var text = document.getElementById('workout-timer-text');
-  if (text) text.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+  if (text) {
+    if (hrs > 0) {
+      text.textContent = hrs + ':' + (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+    } else {
+      text.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+  }
 }
 
 function stopWorkoutTimer() {
   if (workoutTimerInterval) clearInterval(workoutTimerInterval);
   workoutTimerInterval = null;
-  var el = document.getElementById('workout-timer');
-  if (el) el.style.display = 'none';
+  workoutTimerStart = null;
+  workoutTimerPaused = false;
+  workoutTimerPausedElapsed = 0;
+  var timerEl = document.getElementById('workout-timer');
+  var startBtn = document.getElementById('workout-timer-start');
+  if (timerEl) timerEl.style.display = 'none';
+  if (startBtn) startBtn.style.display = 'inline-block';
+}
+
+function resetWorkoutTimerUI() {
+  if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+  workoutTimerInterval = null;
+  workoutTimerStart = null;
+  workoutTimerPaused = false;
+  workoutTimerPausedElapsed = 0;
+  var timerEl = document.getElementById('workout-timer');
+  var startBtn = document.getElementById('workout-timer-start');
+  if (timerEl) timerEl.style.display = 'none';
+  if (startBtn) startBtn.style.display = 'inline-block';
 }
 
 function getWorkoutDuration() {
@@ -4085,8 +4170,42 @@ function getWorkoutDuration() {
   var elapsed = Math.floor((Date.now() - workoutTimerStart) / 1000);
   var mins = Math.floor(elapsed / 60);
   if (mins < 1) return '<1 min';
+  if (mins >= 60) return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
   return mins + ' min';
 }
+
+function togglePauseTimer() {
+  var dot = document.getElementById('timer-dot');
+  var pauseBtn = document.getElementById('timer-pause-btn');
+  
+  if (!workoutTimerPaused) {
+    // Pause
+    workoutTimerPaused = true;
+    workoutTimerPausedElapsed = Math.floor((Date.now() - workoutTimerStart) / 1000);
+    if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+    workoutTimerInterval = null;
+    if (dot) { dot.style.animation = 'none'; dot.style.opacity = '0.3'; }
+    if (pauseBtn) pauseBtn.textContent = '▶';
+  } else {
+    // Resume — adjust start time to account for paused duration
+    workoutTimerPaused = false;
+    workoutTimerStart = Date.now() - (workoutTimerPausedElapsed * 1000);
+    if (dot) { dot.style.animation = 'pulse 1.5s ease infinite'; dot.style.opacity = '1'; }
+    if (pauseBtn) pauseBtn.textContent = '❚❚';
+    workoutTimerInterval = setInterval(updateWorkoutTimer, 1000);
+    updateWorkoutTimer();
+  }
+}
+
+// Resume timer display when phone unlocks / tab refocuses
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && workoutTimerStart && !workoutTimerPaused) {
+    updateWorkoutTimer();
+    if (!workoutTimerInterval) {
+      workoutTimerInterval = setInterval(updateWorkoutTimer, 1000);
+    }
+  }
+});
 
 // ════════════════════════════════════════════════════════════
 // BODY MEASUREMENTS
