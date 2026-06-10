@@ -1338,6 +1338,9 @@
   }
   .meas-save-btn:active { opacity: 0.7; }
 
+  .meas-detail-collapse { display: none; }
+  .meas-detail-collapse.open { display: block; animation: slideIn 0.2s ease; }
+
   /* ── Animations ── */
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.95) translateY(8px); }
@@ -1396,7 +1399,7 @@
     <button class="auth-guest-btn" onclick="guestLogin()">Continue as Guest</button>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;">Try 1 workout day free · Sign up for full access</div>
     <div id="auth-version" style="margin-top:24px;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;">
-      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.8.6-dev</span>
+      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v1.8.7-dev</span>
       <div style="margin-top:4px;">MackTrak [DEV] · Built with 🦾</div>
     </div>
   </div>
@@ -1571,10 +1574,10 @@
 
   <!-- ── Version Footer ── -->
   <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;display:none;">
-    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.8.6-dev</div>
+    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v1.8.7-dev</div>
     <div>MackTrak [DEV] · Built with 🦾</div>
     <div class="version-changelog" id="changelog">
-      <strong>v1.8.6-dev</strong> — Program Builder + Images<br>
+      <strong>v1.8.7-dev</strong> — Program Builder + Images<br>
       • Admin program builder (create/edit/delete programs)<br>
       • Day editor with emoji and color picker<br>
       • Inline exercise editor with image URL support<br>
@@ -4222,37 +4225,64 @@ function buildMeasurements() {
   for (var i = 0; i < totalWeeks; i++) {
     var w = weekOffset + i;
     var isCur = w === selectedWeek;
+    var hasData = MEAS_FIELDS.some(function(f) { return lsGet('meas_' + w + '_' + f); });
     
     var section = document.createElement('div');
     section.className = 'meas-section' + (isCur ? ' open' : '');
     section.id = 'meas-section-' + w;
     
-    var hasData = MEAS_FIELDS.some(function(f) { return lsGet('meas_' + w + '_' + f); });
-    var badge = hasData ? '✓' : '—';
-    
     section.innerHTML =
       '<div class="meas-header" onclick="document.getElementById(\'meas-section-' + w + '\').classList.toggle(\'open\')">' +
         '<div class="meas-title">Week ' + (w + 1) + (isCur ? ' <span style="font-size:10px;background:rgba(255,159,10,0.15);padding:1px 6px;border-radius:4px;">now</span>' : '') + '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
-          '<span style="font-size:11px;color:' + (hasData ? '#FF9F0A' : 'var(--text-tertiary)') + ';">' + badge + '</span>' +
+          '<span style="font-size:11px;color:' + (hasData ? '#FF9F0A' : 'var(--text-tertiary)') + ';">' + (hasData ? '✓' : '—') + '</span>' +
           '<span class="meas-chevron">›</span>' +
         '</div>' +
       '</div>' +
       '<div class="meas-body">' +
-        '<div class="meas-grid">' +
-          MEAS_FIELDS.map(function(f) {
-            var val = lsGet('meas_' + w + '_' + f) || '';
-            return '<div class="meas-field">' +
-              '<div class="meas-label">' + f.charAt(0).toUpperCase() + f.slice(1) + ' (in)</div>' +
-              '<input type="number" inputmode="decimal" class="meas-input" placeholder="—" value="' + val + '" data-week="' + w + '" data-field="' + f + '">' +
-            '</div>';
-          }).join('') +
+        '<div style="margin-bottom:14px;padding:14px;background:rgba(255,159,10,0.06);border-radius:12px;border:1px solid rgba(255,159,10,0.15);">' +
+          '<div style="font-size:11px;font-weight:700;color:#FF9F0A;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Body Weight</div>' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<input type="number" inputmode="decimal" style="flex:1;height:48px;border-radius:12px;background:rgba(255,159,10,0.08);border:2px solid rgba(255,159,10,0.2);color:#fff;font-size:22px;font-weight:800;text-align:center;font-family:inherit;outline:none;" placeholder="— lbs" value="' + (lsGet(bwKey(w)) || '') + '" oninput="quickSaveWeight(' + w + ', this.value)">' +
+            '<span style="font-size:14px;color:rgba(255,159,10,0.4);font-weight:600;">lbs</span>' +
+          '</div>' +
         '</div>' +
-        '<button class="meas-save-btn" onclick="saveMeasurements(' + w + ', this)">Save Measurements</button>' +
+        '<div style="margin-bottom:10px;">' +
+          '<div onclick="document.getElementById(\'meas-detail-' + w + '\').classList.toggle(\'open\')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 0;">' +
+            '<span style="font-size:12px;color:var(--text-tertiary);font-weight:600;">📏 Body Measurements (optional)</span>' +
+            '<span style="font-size:12px;color:var(--text-tertiary);">+</span>' +
+          '</div>' +
+          '<div id="meas-detail-' + w + '" class="meas-detail-collapse">' +
+            '<div class="meas-grid" style="margin-top:8px;">' +
+              MEAS_FIELDS.map(function(f) {
+                var val = lsGet('meas_' + w + '_' + f) || '';
+                return '<div class="meas-field">' +
+                  '<div class="meas-label">' + f.charAt(0).toUpperCase() + f.slice(1) + ' (in)</div>' +
+                  '<input type="number" inputmode="decimal" class="meas-input" placeholder="—" value="' + val + '" data-week="' + w + '" data-field="' + f + '">' +
+                '</div>';
+              }).join('') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<button class="meas-save-btn" onclick="saveMeasurements(' + w + ', this)">Save All</button>' +
       '</div>';
     
     container.appendChild(section);
   }
+}
+
+function quickSaveWeight(week, val) {
+  lsSet(bwKey(week), val);
+  saveBodyWeightRemote(week, val);
+  // Update the weight tracker row too
+  var row = document.getElementById('wt-row-' + week);
+  if (row) {
+    var input = row.querySelector('.wt-input');
+    if (input) input.value = val;
+  }
+  updateWeightDeltas();
+  updateWeightStats();
+  drawBodyWeightChart();
 }
 
 async function saveMeasurements(week, btn) {
