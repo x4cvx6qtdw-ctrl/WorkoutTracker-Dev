@@ -1350,6 +1350,7 @@
   <div id="screen-home" class="screen">
     <div id="home-header">
       
+      <div class="header-eyebrow" style="color:rgba(255,159,10,0.5);">12-Week Program</div>
       <div style="text-align:center;margin:-4px 0 -8px;">
         <div style="position:relative;display:inline-block;">
           <svg viewBox="0 0 320 160" width="260" height="130" xmlns="http://www.w3.org/2000/svg">
@@ -1824,7 +1825,7 @@ async function handleLogout() {
 }
 
 let isGuest = false;
-function getWeeks() { return isGuest ? 1 : 12; }
+function getWeeks() { return 12; }
 
 
 
@@ -2126,6 +2127,10 @@ function buildWeekScroller() {
 }
 
 function selectWeek(w) {
+  if (isGuest && w > 0) {
+    showGuestUpgrade('Full Program');
+    return;
+  }
   selectedWeek = w;
   document.querySelectorAll('.week-btn').forEach((b, i) => {
     b.classList.toggle('selected', i === w);
