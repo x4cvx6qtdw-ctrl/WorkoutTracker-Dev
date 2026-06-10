@@ -4178,6 +4178,26 @@ function closeWizard() {
   document.getElementById('setup-wizard').classList.remove('open');
 }
 
+function setWizardEquip(val) {
+  wizardData.equipment = val;
+  renderWizardStep();
+}
+
+function setWizardProgram(id) {
+  wizardData.programId = id;
+  renderWizardStep();
+}
+
+async function finishWizard() {
+  if (!wizardData.programId || isGuest) return;
+  showSyncIndicator('saving');
+  await sb.from('profiles').update({ program_id: wizardData.programId }).eq('id', currentUser.id);
+  hideSyncIndicator();
+  closeWizard();
+  await loadUserProgram();
+  buildWorkoutList();
+}
+
 function renderWizardStep() {
   var dots = document.getElementById('wizard-dots');
   dots.innerHTML = '';
