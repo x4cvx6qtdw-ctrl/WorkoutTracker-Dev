@@ -1409,6 +1409,16 @@
   .wizard-next:disabled { opacity: 0.3; cursor: not-allowed; }
   .wizard-skip { text-align: center; padding: 14px; color: rgba(255,255,255,0.2); font-size: 13px; font-weight: 600; cursor: pointer; max-width: 420px; width: 100%; }
 
+  .set-save-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,159,10,0.12); border: 1px solid rgba(255,159,10,0.25);
+    color: #FF9F0A; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: inherit; transition: all 0.2s; flex-shrink: 0;
+  }
+  .set-save-btn:active { opacity: 0.7; }
+  .set-save-btn.saved { background: rgba(48,209,88,0.15); border-color: rgba(48,209,88,0.3); color: #30D158; }
+
   /* ── Animations ── */
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.95) translateY(8px); }
@@ -1472,7 +1482,7 @@
     </div>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;">Try 1 workout day free · Sign up for full access</div>
     <div id="auth-version" style="margin-top:24px;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;">
-      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v2.0.0-dev</span>
+      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v2.0.1-dev</span>
       <div style="margin-top:4px;">MackTrak [DEV] · Built with 🦾</div>
     </div>
   </div>
@@ -1672,10 +1682,10 @@
 
   <!-- ── Version Footer ── -->
   <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;display:none;">
-    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v2.0.0-dev</div>
+    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v2.0.1-dev</div>
     <div>MackTrak [DEV] · Built with 🦾</div>
     <div class="version-changelog" id="changelog">
-      <strong>v2.0.0-dev</strong> — Program Builder + Images<br>
+      <strong>v2.0.1-dev</strong> — Program Builder + Images<br>
       • Admin program builder (create/edit/delete programs)<br>
       • Day editor with emoji and color picker<br>
       • Inline exercise editor with image URL support<br>
@@ -2467,6 +2477,7 @@ function buildExerciseList(wo) {
               <div class="input-label">reps</div>
             </div>
             <button class="set-timer-btn" onclick="startSetTimer(${ei})" title="Start rest timer">⏱️</button>
+            <button class="set-save-btn" id="save-btn-${wo.id}-${ei}-${si}" onclick="saveSetBtn(this, '${wo.id}', ${ei}, ${si})" title="Save set">✓</button>
           </div>
         </div>`;
     }
@@ -2585,6 +2596,18 @@ function renderExHistory(card, wo, ei) {
 function toggleExercise(btn) {
   const card = btn.closest('.exercise-card');
   card.classList.toggle('open');
+}
+
+function saveSetBtn(btn, wid, ei, si) {
+  var row = btn.closest('.set-row');
+  var inputs = row.querySelectorAll('.weight-input');
+  inputs.forEach(function(inp) { saveSetField(inp); });
+  btn.classList.add('saved');
+  btn.textContent = '✓';
+  setTimeout(function() {
+    btn.classList.remove('saved');
+    btn.textContent = '✓';
+  }, 2000);
 }
 
 function saveSetField(input) {
