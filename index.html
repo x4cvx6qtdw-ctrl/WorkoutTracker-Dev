@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MackTrak">
 <meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
 <title>MackTrak [DEV]</title>
 <style>
   :root {
@@ -1426,7 +1427,15 @@
   }
   .pop-in { animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function(e) {
+    console.log('SW registration skipped:', e.message);
+  });
+}
+
+</script>
 </head>
 <body>
 <div id="app">
@@ -1482,7 +1491,7 @@
     </div>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;">Try 1 workout day free · Sign up for full access</div>
     <div id="auth-version" style="margin-top:24px;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;">
-      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v2.0.1-dev</span>
+      <span style="background:rgba(255,159,10,0.15);color:#FF9F0A;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:0.5px;">v2.0.2-dev</span>
       <div style="margin-top:4px;">MackTrak [DEV] · Built with 🦾</div>
     </div>
   </div>
@@ -1682,10 +1691,10 @@
 
   <!-- ── Version Footer ── -->
   <div class="version-footer" id="version-footer" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:0;width:100%;max-width:430px;display:none;">
-    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v2.0.1-dev</div>
+    <div class="version-tag" onclick="document.getElementById('changelog').classList.toggle('open')" style="background:rgba(255,159,10,0.15);color:#FF9F0A;">v2.0.2-dev</div>
     <div>MackTrak [DEV] · Built with 🦾</div>
     <div class="version-changelog" id="changelog">
-      <strong>v2.0.1-dev</strong> — Program Builder + Images<br>
+      <strong>v2.0.2-dev</strong> — Program Builder + Images<br>
       • Admin program builder (create/edit/delete programs)<br>
       • Day editor with emoji and color picker<br>
       • Inline exercise editor with image URL support<br>
@@ -2405,6 +2414,7 @@ function showDetail(wo) {
   resetWorkoutTimerUI();
   buildExerciseList(wo);
   updateDetailProgress(wo);
+  setTimeout(function() { restoreSetsFromCache(wo); }, 100);
   loadCardio();
 }
 
@@ -2463,7 +2473,7 @@ function buildExerciseList(wo) {
                 placeholder="${wPlaceholder}"
                 value="${storedWeight}"
                 data-wid="${wo.id}" data-ei="${ei}" data-si="${si}" data-type="weight"
-                onchange="saveSetField(this)" onblur="saveSetField(this)"
+                oninput="saveSetField(this)"
               >
               <div class="input-label">lbs</div>
             </div>
@@ -2472,7 +2482,7 @@ function buildExerciseList(wo) {
                 placeholder="${rPlaceholder}"
                 value="${storedReps}"
                 data-wid="${wo.id}" data-ei="${ei}" data-si="${si}" data-type="reps"
-                onchange="saveSetField(this)" onblur="saveSetField(this)"
+                oninput="saveSetField(this)"
               >
               <div class="input-label">reps</div>
             </div>
@@ -2611,29 +2621,126 @@ function saveSetBtn(btn, wid, ei, si) {
 }
 
 function saveSetField(input) {
-  const wid   = input.getAttribute('data-wid');
-  const ei    = parseInt(input.getAttribute('data-ei'));
-  const si    = parseInt(input.getAttribute('data-si'));
-  const type  = input.getAttribute('data-type');
-  const val   = input.value;
-
-  if (type === 'weight') lsSet(wKey(wid, ei, si, selectedWeek), val);
-  else                   lsSet(rKey(wid, ei, si, selectedWeek), val);
-
-  // Always save both fields together
-  const weight   = lsGet(wKey(wid, ei, si, selectedWeek)) || '';
-  const repsDone = lsGet(rKey(wid, ei, si, selectedWeek)) || '';
-  saveSetRemote(wid, ei, si, selectedWeek, weight, repsDone);
-
-  // Check for PR
-  if (type === 'weight' && weight) {
-    checkForPR(wid, ei, si, selectedWeek, weight);
+  var wid = input.dataset.wid;
+  var ei = parseInt(input.dataset.ei);
+  var si = parseInt(input.dataset.si);
+  var type = input.dataset.type;
+  var val = input.value;
+  
+  // LAYER 1: Instant localStorage save (survives page kill)
+  var lsKey = 'set_' + wid + '_' + ei + '_' + si + '_' + type + '_w' + selectedWeek;
+  localStorage.setItem(lsKey, val);
+  
+  // LAYER 2: Queue debounced Supabase sync
+  queueSetSync(wid, ei, si, selectedWeek);
+  
+  // Update UI (check completion)
+  var row = input.closest('.set-row');
+  var inputs = row.querySelectorAll('.weight-input');
+  var w = inputs[0]?.value;
+  var r = inputs[1]?.value;
+  if (w && r) {
+    row.classList.add('done-set');
+    row.classList.remove('active-set');
   }
+  updateDetailProgress(currentDetailWorkout);
+}
 
-  if (currentWorkout) {
-    updateDetailProgress(currentWorkout);
-    refreshExerciseProgress(input);
+// Pending sync queue
+var pendingSyncs = {};
+var syncTimers = {};
+
+function queueSetSync(wid, ei, si, week) {
+  var key = wid + '_' + ei + '_' + si + '_' + week;
+  pendingSyncs[key] = { wid: wid, ei: ei, si: si, week: week };
+  
+  // Debounce: sync 500ms after last keystroke
+  if (syncTimers[key]) clearTimeout(syncTimers[key]);
+  syncTimers[key] = setTimeout(function() {
+    flushSetSync(key);
+  }, 500);
+}
+
+async function flushSetSync(key) {
+  var s = pendingSyncs[key];
+  if (!s || isGuest) return;
+  
+  var wKey = 'set_' + s.wid + '_' + s.ei + '_' + s.si + '_weight_w' + s.week;
+  var rKey = 'set_' + s.wid + '_' + s.ei + '_' + s.si + '_reps_w' + s.week;
+  var weight = localStorage.getItem(wKey) || '';
+  var reps = localStorage.getItem(rKey) || '';
+  
+  try {
+    await sb.from('workout_sets').upsert({
+      user_id: currentUser.id,
+      workout_id: s.wid,
+      exercise_index: s.ei,
+      set_index: s.si,
+      week: s.week,
+      weight: weight,
+      reps_done: reps
+    }, { onConflict: 'user_id,workout_id,exercise_index,set_index,week' });
+    
+    showSyncIndicator('saved');
+  } catch(e) {
+    console.warn('Sync failed, will retry:', e);
+    // Keep in pendingSyncs for retry on visibilitychange
+    return;
   }
+  
+  delete pendingSyncs[key];
+  delete syncTimers[key];
+}
+
+// Flush ALL pending saves (called before page dies)
+async function flushAllPending() {
+  var keys = Object.keys(pendingSyncs);
+  if (keys.length === 0) return;
+  
+  var promises = keys.map(function(key) {
+    if (syncTimers[key]) clearTimeout(syncTimers[key]);
+    return flushSetSync(key);
+  });
+  
+  await Promise.all(promises);
+}
+
+// LAYER 2: Save before page dies (visibilitychange + beforeunload)
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    flushAllPending();
+  }
+});
+
+window.addEventListener('beforeunload', function() {
+  flushAllPending();
+});
+
+window.addEventListener('pagehide', function() {
+  flushAllPending();
+});
+
+// Restore set values from localStorage on exercise open
+function restoreSetsFromCache(wo) {
+  if (!wo || !wo.exercises) return;
+  wo.exercises.forEach(function(ex, ei) {
+    for (var si = 0; si < ex.sets; si++) {
+      var wKey = 'set_' + wo.id + '_' + ei + '_' + si + '_weight_w' + selectedWeek;
+      var rKey = 'set_' + wo.id + '_' + ei + '_' + si + '_reps_w' + selectedWeek;
+      var cachedW = localStorage.getItem(wKey);
+      var cachedR = localStorage.getItem(rKey);
+      
+      // Only use cache if we have a value and the DB value is empty
+      if (cachedW !== null) {
+        var input = document.querySelector('[data-wid="' + wo.id + '"][data-ei="' + ei + '"][data-si="' + si + '"][data-type="weight"]');
+        if (input && !input.value && cachedW) input.value = cachedW;
+      }
+      if (cachedR !== null) {
+        var input2 = document.querySelector('[data-wid="' + wo.id + '"][data-ei="' + ei + '"][data-si="' + si + '"][data-type="reps"]');
+        if (input2 && !input2.value && cachedR) input2.value = cachedR;
+      }
+    }
+  });
 }
 
 function refreshExerciseProgress(input) {
