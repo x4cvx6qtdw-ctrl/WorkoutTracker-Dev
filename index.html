@@ -1427,15 +1427,7 @@
   }
   .pop-in { animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function(e) {
-    console.log('SW registration skipped:', e.message);
-  });
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -5185,6 +5177,16 @@ function closePhotoViewer(e) {
   if (!e || e.target === document.getElementById('photo-viewer') || e.target.closest('.photo-viewer-close')) {
     document.getElementById('photo-viewer').classList.remove('open');
   }
+}
+
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
+    console.log('SW registered:', reg.scope);
+  }).catch(function(e) {
+    console.log('SW registration failed:', e.message);
+  });
 }
 
 </script>
